@@ -18,3 +18,11 @@ export const startVercel = async (req: VercelRequest, res: VercelResponse) => {
 };
 //dev mode
 ENVIRONMENT !== "production" && development(bot);
+
+const checkWebHook = async () => {
+  const getWebhookInfo = await bot.telegram.getWebhookInfo();
+
+  console.log(getWebhookInfo);
+};
+
+checkWebHook();
