@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "DEBUG=bot* dotenv -- ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "ncc build src/index.ts -o public -m"
+    "build": "ncc build src/index.ts -o public -m",
+    "build:start": "npm run build && dotenv -- node public/index.js"
   },
   "author": "",
   "license": "ISC",
