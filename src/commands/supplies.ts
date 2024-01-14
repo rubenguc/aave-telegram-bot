@@ -16,6 +16,12 @@ export const supplies = () => async (ctx: Context) => {
 
   debug("Address: %s", address);
 
+  if (address.trim() === "") {
+    return await ctx.reply(
+      "You must provide an address, type: /supplies <your_address>"
+    );
+  }
+
   const isValidAddress = isAddress(address);
   if (!isValidAddress) {
     return await ctx.replyWithMarkdownV2("Invalid address");
