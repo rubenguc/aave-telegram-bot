@@ -46,10 +46,12 @@ export const supplies = () => async (ctx: Context) => {
   let response = "";
 
   for (const token of resume) {
-    response += `*${token.symbol}*\n`;
-    response += `Balance: $ ${token.totalBalance}\n`;
-    response += `Total supply: $ ${token.totalSupplied}\n`;
-    response += `Profit: $ ${token.profit}\n`;
+    const symbol = token.symbol;
+
+    response += `*${symbol}*\n`;
+    response += `Balance: ${token.totalBalance} ${symbol}\n`;
+    response += `Total supply: ${token.totalSupplied} ${symbol}\n`;
+    response += `Profit: ${token.profit} ${symbol}\n`;
     response += "\n";
   }
 
