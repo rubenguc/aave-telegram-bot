@@ -1,6 +1,5 @@
 import { gql } from "graphql-request";
 import {
-  ReserveConfigurationData,
   ReseverToken,
   Suppli,
   UserReserveData,
@@ -21,7 +20,7 @@ export const getSuppliesQuery = async ({
   };
 }> => {
   try {
-    const query = gql`
+    const suppliesQuery = gql`
       query supplies($userAddress: String!, $tokenAddresses: [String!]!) {
         supplies(
           where: {
@@ -30,6 +29,30 @@ export const getSuppliesQuery = async ({
           }
         ) {
           amount
+          action
+          reserve {
+            underlyingAsset
+            symbol
+            name
+            decimals
+          }
+        }
+      }
+    `;
+
+    const withdrawsQuery = gql`
+      query redeemUnderlyings(
+        $userAddress: String!
+        $tokenAddresses: [String!]!
+      ) {
+        redeemUnderlyings(
+          where: {
+            user_: { id: $userAddress }
+            reserve_: { underlyingAsset_in: $tokenAddresses }
+          }
+        ) {
+          amount
+          action
           reserve {
             underlyingAsset
             symbol
@@ -45,9 +68,21 @@ export const getSuppliesQuery = async ({
       tokenAddresses,
     };
 
-    const { supplies: data } = (await gqlClient.request(query, variables)) as {
+    const { supplies: data } = (await gqlClient.request(
+      suppliesQuery,
+      variables
+    )) as {
       supplies: Suppli[];
     };
+
+    const { redeemUnderlyings: withdraws } = (await gqlClient.request(
+      withdrawsQuery,
+      variables
+    )) as {
+      redeemUnderlyings: Suppli[];
+    };
+
+    const allData = [...data, ...withdraws];
 
     const supplies: {
       [key: string]: {
@@ -56,18 +91,39 @@ export const getSuppliesQuery = async ({
       };
     } = {};
 
-    data.forEach((supply) => {
-      if (!supplies[supply.reserve.underlyingAsset]) {
-        supplies[supply.reserve.underlyingAsset] = {
-          amount: supply.amount,
+    let totalSupplied = 0;
+    let totalWithdrawn = 0;
+
+    allData.forEach((supply) => {
+      const asset = supply.reserve.underlyingAsset;
+
+      const isWithdraw = supply.action === "RedeemUnderlying";
+
+      const amount = isWithdraw ? `-${supply.amount}` : supply.amount;
+
+      if (isWithdraw) {
+        totalWithdrawn += Number(supply.amount);
+      } else {
+        totalSupplied += Number(supply.amount);
+      }
+
+      console.log("supply:", supply);
+
+      if (!supplies[asset]) {
+        supplies[asset] = {
+          amount: amount,
           decimals: supply.reserve.decimals,
         };
       } else {
-        supplies[supply.reserve.underlyingAsset].amount = (
-          BigInt(supplies[supply.reserve.underlyingAsset].amount) +
-          BigInt(supply.amount)
+        supplies[asset].amount = (
+          BigInt(supplies[asset].amount) + BigInt(amount)
         ).toString();
       }
+    });
+
+    console.log("totals:", {
+      totalSupplied,
+      totalWithdrawn,
     });
 
     return supplies;

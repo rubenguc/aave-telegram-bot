@@ -21,6 +21,7 @@ interface Reserve {
 
 export interface Suppli {
   amount: string;
+  action: string;
   reserve: Reserve;
 }
 
